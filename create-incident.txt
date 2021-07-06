@@ -1,0 +1,40 @@
+(function runAction( /*GlideRecord*/ current, /*GlideRecord*/ event, /*EmailWrapper*/ email, /*ScopedEmailLogger*/ logger, /*EmailClassifier*/ classifier) {
+
+    //Parse Table Content to Description
+    var parseBody = email.body_text.split(',').join('\n');
+    current.description = parseBody;
+
+    //Populate Email content to Fields
+    current.short_description = email.subject;
+    current.caller_id = gs.getUserID();
+    current.contact_type = "Email";
+    current.comments = "recieved from: " + email.origemail + "\n\n" + email.body_text;
+    current.category = "xio";
+    current.subcategory = "Email";
+    current.cmbd_ci.setDisplayValue('XiO');
+
+    //Parse Correlation ID from Email
+    var rsubject = email.subject;
+    var keyword = "CorrelationID#";
+    var key = rsubject.indexOf(keyword); //Assuming this text would never change
+    gs.log(key, 'Did it work');
+    if (key > 0) {
+        var number = rsubject.substring(47);
+        gs.log(number, "TEST"); //Try logging number
+        current.correlation_id = number;
+        gs.log(number, "TEST AGAIN");
+    }
+
+    //Logic to Define Priority
+    if (email.body_text.toLowerCase().indexOf("critical") >= 0) {
+        current.impact = 1;
+        current.urgency = 1;
+    }
+    if (email.body_text.toLowerCase().indexOf("warning") >= 0) {
+        current.impact = 2;
+        current.urgency = 2;
+    }
+
+    current.insert();
+
+})(current, event, email, logger, classifier);
