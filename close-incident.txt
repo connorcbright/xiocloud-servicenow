@@ -1,0 +1,25 @@
+(function runAction( /*GlideRecord*/ current, /*GlideRecord*/ event, /*EmailWrapper*/ email, /*ScopedEmailLogger*/ logger, /*EmailClassifier*/ classifier) {
+
+    //Logic to parse Correlation ID
+    var rsubject = email.subject;
+    var keyword = "CorrelationID#";
+    var key = rsubject.indexOf(keyword); //Assuming this text would never change
+    if (key > 0) {
+        var myID = rsubject.substring(50);
+        gs.log(myID);
+    }
+
+    var myTask = new GlideRecord('incident');
+    myTask.addQuery("correlation_id", myID.toString());
+    myTask.query();
+    if (myTask.next()) {
+        myTask.incident_state = IncidentState.CLOSED;
+        gs.log('Task Completed');
+        myTask.update();
+    } else {
+        // No match found so log an error
+        gs.info('No Match found');
+    }
+	
+
+})(current, event, email, logger, classifier);
